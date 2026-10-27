@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GlobeSend | Transfer quote demo</title>
+  <style>
+    :root { font-family: system-ui, sans-serif; color: #17243b; background: #f3f6fb; }
+    body { margin: 0; padding: 2rem 1rem; }
+    main { max-width: 680px; margin: auto; padding: 2rem; background: white; border-radius: 12px; box-shadow: 0 8px 30px #17243b14; }
+    h1 { margin-top: 0; } .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    label { display: block; font-weight: 600; margin: 1rem 0 .35rem; }
+    input, select, button { box-sizing: border-box; width: 100%; padding: .75rem; font: inherit; border: 1px solid #aeb9ca; border-radius: 6px; }
+    button { margin-top: 1.25rem; background: #174ea6; color: white; border: 0; font-weight: 700; cursor: pointer; }
+    dl { display: grid; grid-template-columns: 1fr auto; gap: .6rem; padding: 1rem; background: #f3f6fb; }
+    dt, dd { margin: 0; } dd { font-weight: 700; }
+    [role="alert"] { color: #a12121; } [role="status"] { color: #12633d; font-weight: 700; }
+    @media (max-width: 520px) { .grid { grid-template-columns: 1fr; gap: 0; } main { padding: 1.25rem; } }
+  </style>
+</head>
+<body>
+<main>
+  <h1>GlobeSend transfer quote</h1>
+  <p>A local, simulated money transfer demo. No real transactions are made.</p>
+  <form id="transfer-form" novalidate>
+    <div class="grid">
+      <div>
+        <label for="source-currency">You send</label>
+        <select id="source-currency" data-testid="source-currency" required>
+          <option value="">Select currency</option><option value="USD">USD</option>
+        </select>
+      </div>
+      <div>
+        <label for="destination-currency">Recipient gets</label>
+        <select id="destination-currency" data-testid="destination-currency" required>
+          <option value="">Select currency</option><option value="MXN">MXN</option><option value="EUR">EUR</option>
+        </select>
+      </div>
+    </div>
+    <label for="amount">Transfer amount (USD)</label>
+    <input id="amount" data-testid="amount" type="text" inputmode="decimal" autocomplete="off" aria-describedby="validation-error" placeholder="e.g. 100.00">
+    <p id="validation-error" data-testid="validation-error" role="alert" aria-live="polite"></p>
+    <dl aria-label="Quote details">
+      <dt>Exchange rate</dt><dd data-testid="exchange-rate">—</dd>
+      <dt>Transfer fee</dt><dd data-testid="fee">—</dd>
+      <dt>Recipient amount</dt><dd data-testid="recipient-amount">—</dd>
+      <dt>Total charged</dt><dd data-testid="total-charged">—</dd>
+    </dl>
+    <button type="submit" data-testid="create-draft">Create draft</button>
+    <p data-testid="confirmation" role="status" aria-live="polite"></p>
+  </form>
+</main>
+<script>
+(() => {
+  const form = document.querySelector("#transfer-form");
+  const source = document.querySelector("#source-currency");
+  const destination = document.querySelector("#destination-currency");
+  const amountInput = document.querySelector("#amount");
+  const error = document.querySelector("#validation-error");
+  const confirmation = document.querySelector("[data-testid=confirmation]");
+  const quote = {
+    rate: document.querySelector("[data-testid=exchange-rate]"),
+    fee: document.querySelector("[data-testid=fee]"),
+    recipient: document.querySelector("[data-testid=recipient-amount]"),
+    total: document.querySelector("[data-testid=total-charged]")
+  };
+  const money = (value, currency) => `${value.toFixed(2)} ${currency}`;
+
+  function validate() {
+    const raw = amountInput.value.trim();
+    const value = Number(raw);
+    if (!source.value || !destination.value) return "Select both currencies.";
+    if (source.value !== "USD" || destination.value !== "MXN") return "This currency pair is not supported.";
+    if (!raw) return "Enter a transfer amount.";
+    if (!/^\d+(\.\d+)?$/.test(raw) || !Number.isFinite(value)) return "Enter a valid positive number.";
+    if (value <= 0) return "Transfer amount must be greater than zero.";
+    if (value < 1) return "Minimum transfer amount is 1.00 USD.";
+    if (value > 5000) return "Maximum transfer amount is 5,000.00 USD.";
+    return "";
+  }
+
+  function updateQuote() {
+    const issue = validate();
+    error.textContent = issue;
+    const value = Number(amountInput.value.trim());
+    const valid = !issue;
+    quote.rate.textContent = valid ? "1 USD = 17.00 MXN" : "—";
+    quote.fee.textContent = valid ? money(3, "USD") : "—";
+    const recipient = value * 17;
+    quote.recipient.textContent = valid ? money(Math.round((recipient + Number.EPSILON * Math.abs(recipient)) * 100) / 100, "MXN") : "—";
+    quote.total.textContent = valid ? money(value + 3, "USD") : "—";
+    if (issue) confirmation.textContent = "";
+    return !issue;
+  }
+
+  form.addEventListener("input", updateQuote);
+  form.addEventListener("change", updateQuote);
+  form.addEventListener("submit", event => {
+    event.preventDefault();
+    if (!updateQuote()) return;
+    const reference = `GS-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
+    confirmation.textContent = `Draft created successfully. Reference: ${reference}`;
+  });
+})();
+</script>
+</body>
+</html>
