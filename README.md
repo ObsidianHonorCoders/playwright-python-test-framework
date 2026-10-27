@@ -11,6 +11,7 @@ app/server.py                 Local static application server
 app/index.html                Responsive simulated quote and draft UI
 tests/pages/transfer_page.py  Page Object
 tests/data/quotes.py          Business test values
+tests/conftest.py             Starts and stops the local app for pytest
 tests/test_transfer.py        Positive, negative, boundary, regression UI tests
 pytest.ini                    Browser, base URL, timeout, failure diagnostics
 .github/workflows/tests.yml   GitHub Actions workflow
@@ -46,20 +47,16 @@ This is a demo, not a production-ready or financially secure application. Draft 
 The batch file creates `.venv/` at the project root, installs dependencies from `pyenv/requirements.txt`, and installs Chromium. To activate the environment manually afterward:
 
 ```powershell
-.\venv\Scripts\Activate.ps1
+.\.venv\Scripts\Activate.ps1
 ```
 
-Start the app in one terminal:
-
-```powershell
-python -m app.server
-```
-
-The app is available at `http://127.0.0.1:8000`. In another activated terminal, run:
+Run the suite from the project root:
 
 ```powershell
 python -m pytest
 ```
+
+Pytest starts the demo server at `http://127.0.0.1:8000` before the tests and shuts it down afterward. You do not need a separate server terminal. To run the app manually for browsing, use `python -m app.server`.
 
 For HTML and JUnit reports:
 
@@ -72,7 +69,7 @@ Open `reports/report.html` in a browser; JUnit output is at `reports/junit.xml`.
 
 ## CI
 
-GitHub Actions installs Python dependencies and Chromium, starts the local app with a readiness check, runs the same UI suite and report commands, and uploads reports and failure artifacts even when the tests fail. It requires no secrets.
+GitHub Actions installs Python dependencies and Chromium, runs the UI suite (which starts the local app automatically), and uploads reports and failure artifacts even when the tests fail. It requires no secrets.
 
 ## Example execution
 
