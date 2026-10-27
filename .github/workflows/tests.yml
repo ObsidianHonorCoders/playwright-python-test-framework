@@ -62,7 +62,7 @@ jobs:
       - name: Publish Test Summary
         if: always()
         run: |
+          echo "### Test Results Summary" >> $GITHUB_STEP_SUMMARY
           if [ -f reports/junit.xml ]; then
-            echo "### Test Results Summary" >> $GITHUB_STEP_SUMMARY
-            echo "JUnit report generated successfully at `reports/junit.xml`." >> $GITHUB_STEP_SUMMARY
+            echo "JUnit report generated successfully at \`reports/junit.xml\`." >> $GITHUB_STEP_SUMMARY
           fi
